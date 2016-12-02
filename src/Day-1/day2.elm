@@ -4,7 +4,13 @@ import Html exposing (..)
 import String
 import Array exposing (..)
 
-testData : List ( String, String )
+type alias TestRecord = ( String, String )
+type alias KeyPad = Array (Array Int)
+type alias KeyRow = Array Int
+type alias Key = Int
+type alias Position = ( Int, Int )
+
+testData : List TestRecord
 testData =
     [ ( "Test One", "ULL
 RRDDD
@@ -17,11 +23,6 @@ ULRULDDLDLULLLRRRLRUDDDDDLLDDUDLRRDULUUDRDLRRURDRRLUULRURUDRRULDLLLUDRUUDULULUDD
 LRLUUURRLRRRRRUURRLLULRLULLDLUDLUDRDDRLDLRLULLURDURLURDLLRLDUUDDURRRRLDLLRULLRLDLLUUDRLDDLLDRULDRLLRURDLRURRUDLULLRURDLURRURUDULLDRLLUUULUDRURRUUDUDULUUULRLDDULDRDLUDDUDDDLRURULLDLLLRLLUURDLRUDLLLLDLLRLRUUUDDRUUUUDLDLRDDURLDURUULLLUUDLLLLDULRRRLLDLDRRDRLUDRUDURLLUDLRLLUDUDRDDDRDLRDLRULUULDRLUDLRLDUURLRRLUDDDUUDDDUDRLDLDUDLURUULLDDDURUUULRLUDLDURUUDRDRURUDDUURDUUUDLLDLDLDURUURLLLLRURUURURULRULLRUDLRRUUUUUDRRLLRDDUURDRDRDDDUDRLURDRRRUDLLLDURDLUUDLLUDDULUUDLDUUULLDRDLRURUURRDURRDLURRRRLLUUULRDULDDLDUURRDLDLLULRRLLUDLDUDLUUL" )
     ]
 
-type alias KeyPad = Array (Array Int)
-type alias KeyRow = Array Int
-type alias Key = Int
-
-type alias Position = ( Int, Int )
 
 keyPad : KeyPad
 keyPad = 
@@ -64,20 +65,22 @@ getKey keyPad ( x, y ) =
         key
 
 
-move : KeyPad -> Position -> String -> Position
-move pad (x, y) instruction = 
+move : String -> Position -> Position
+move instruction (x, y)  = 
     case instruction of
         "U" -> shiftUp ( x, y )
         "D" -> shiftDown ( x, y )
         "L" -> shiftLeft ( x, y )
         "R" -> shiftRight ( x, y )
-        _ -> ( 0, 0 )
+        "\"" -> ( 4 , 4 )
+        "'" -> ( 6 , 6 )
+        _ -> ( 5 , 5 )
 
 
 shiftUp : Position -> Position
 shiftUp ( x, y ) = 
     if y > 0 then
-        ( x, y-1 )
+        ( x, y - 1 )
     else
         ( x, y )
 
@@ -85,7 +88,7 @@ shiftUp ( x, y ) =
 shiftDown : Position -> Position
 shiftDown ( x, y ) = 
     if y < 2 then
-        ( x, y +1 )
+        ( x, y + 1 )
     else
         ( x, y )
 
@@ -106,12 +109,31 @@ shiftRight ( x, y ) =
         ( x , y )
 
 
-testRow: ( String, String ) -> Html msg
+processLine: String -> Position -> Position
+processLine inputData (x, y ) = 
+    let
+        commands = String.toList inputData |> List.map String.fromChar 
+        
+        newPosition = List.foldr move ( x , y ) commands
+    in
+        newPosition
+
+
+{-
+processInstructions: List String -> Position -> Position
+processInstructions lines position = 
+    let 
+        newPosition = List.folder processLine pos (String.lines lines)
+    
+
+-}
+testRow: TestRecord -> Html msg
 testRow ( name, test ) = 
     tr []
         [ td [] [ text name ]
-        , td [] ( List.map (\ a -> div [] [ text (toString a) ] ) (String.lines test) ) 
+        , td [] [ text (toString test) ]
         ]
+
 
 
 main =
