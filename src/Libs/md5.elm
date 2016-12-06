@@ -1,4 +1,4 @@
-module MD5 exposing (hex)
+module Libs.MD5 exposing (hex)
 
 {-| This library allows you to compute MD5 message digests in Elm. It exposes a
 single function that takes any string and outputs a "fingerprint" containing 32
