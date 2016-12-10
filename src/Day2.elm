@@ -1,72 +1,62 @@
 module Day2 exposing (..)
 
 import String
-import Array exposing (..)
+import Array exposing (fromList, length, Array, get, initialize)
+import List exposing (foldr)
 
-type alias TestRecord = ( String, String )
-type alias KeyPad = Array (Array Int)
-type alias KeyRow = Array Int
-type alias Key = Int
+import Data.Day2 exposing (testData, puzzleInput)
+
+type alias KeyPad = Array (Array String)
+type alias KeyRow = Array String
+type alias Key = String
 type alias Position = ( Int, Int )
-
-testData : String
-testData = "ULL
-RRDDD
-LURDL
-UUUUD"
-
-puzzleInput : String
-puzzleInput = "RUDULRLLUULRURDDRRUDURULLLDRLRLUDDLUDUDDUDRRDUDULDUUULLRULLRLDDLDLDDRLRRRRUDLLDDUULDRLLUDDRRUURLULRRRDLLURRUUDURUDDURLUDDDLUDDUUDUURUDLRDRDRLRDRLDRUDRUUDLRDDRRURDDLRDDRRURDUDDLULLUDRURURRRLRRUDUULULULRRLDLUDUURRLLRUDLLDRDDLRRRULRUDLULDDLLLULDLRUDLLLLRDDLRDRLDRLLRDRRDLRDULULRLLLDRUDRRRUULRUULDRURLUDRURRDLLDLRDLDDDDRRLUDLRRLUUUURDRDDLRRURURRDUULLRLURLURUDDDRDURDUUDRLRLRRLDDLDLDLDDDUDDULURLDDLLRLRRDULUDDLULRLUDDLDLRULUUUDRLDRUDURLUDDRLLRUULDLRRRRDLLLLURULLRDRRUDLUULRRDLLRLRLUDLDDULLDLLRDLDLL
-LLUUUUUUDUDRLRDRDLDURRRLLRRLRURLLUURRLLUDUDLULUURUUURDLUDLDDLULLRDLRUULDLRDUDURLLDDUDUDULLUDDUULLLUULRRRLULRURRDLRUDUDDURRRDRUURDURLLULLRULLDRUULLURLDRDUUDDDDDDRRLDRLRRRLULDDUURRLLLLDRURLURDRDRDURUDUURRDUDUDRLLUUDDRLUDDDRDLDLRLDRURRDLLRULDRLLURURRLUULLRLRRURDDRDRUUURUURUUUDLLRRLUDRLDLRLURLDLUDDUDDDLDUDRRLDLRURULRLLRDUULURRRULDLLLRLDDDUURRRRDULLRURRLULULDLRRUDUDDLRUURDLDUDDUDRRDLRRRDUDUUUDLLDDDDLURLURRRUUULLLULRRLLLLLLULDUUDLRUDRRDLRDUUDUDLLRLDLLRUURDUUURUUUDDLLUUDLULDURLULULUUUDRUDULLURRULRULLRDLDDU
-RLUUURULLDLRLDUDRDURRDUURLLUDDDUULRRRLRLURDDRUULUDULDUUDDDDUDDDDRUDDLDUUDRUDLRRRLLRDDLLLRLLRUULRUULDDRURRLURRLRLULDDRRRDDURDDRDRDULRUDRUUDULRLLULDLRLLDRULRDDRRDDUDLRLLUDRDRRRLUDULRDLRDDURRUUDDRRUDURRUUUDDRRDUDURLUUDUDUURDDDLURLULLUULULURUDUUDRUDULLUUULURDLDUULLDDLLDULRLRLRDUUURUUDLRLDURUDRLDULLUDLDLLRDUURRDUDURLUUUDLLRRULRLULRLDLLURDURRULRLLRRDUDLLRDRRRRDLUUDRUUUDDLRLUDDDDDDRURRRUUURRDLLRURLDDLLDLRRLLLDRRULRRUDLDRDDRRLULURLLUURURURRRRUUUUURUDURLRLLLULULDLLDLRDRRULUDUDRDRRDRDRRDUDLLLRUDRUDDDULRULRRRDRLRUUUURUDURDUUULLULRUDDULDUUDLDURRD
-ULRULDDLDLULLLRRRLRUDDDDDLLDDUDLRRDULUUDRDLRRURDRRLUULRURUDRRULDLLLUDRUUDULULUDDRUDDDRDURRRDRDUUURLRDULUDRDRLDRUDDLLLDRRULUDLUDLDLLRRUDUULULDLDLLUURDLDDLLUUDURLURLLLDRDLDRRLRULUURRDRULRUUURULRRUDDDDLLDLDDLLRRLRRRRDUUDUDLDRDRRURDLRURULDLRDLLLLRUDRLLRDLRLRDURDRUDURRRLRDRDLLRLUDDDDRLRLLDUURRURLUURUULUDLUURDRRUDDLUDUDDDURRDRUDRLRULDULUUUUUUDDUDRUDUUURUDRRDLUDLUUDUULUDURDLDDDLLURRURUUDUDDRRDRLLULULDRLRURRDDDRDUUURDDDRULUDRDDLDURRLDDDLRRRLDDRDURULDLUDLLLURLURRLRRULDLLDDUDRRULDRRRRLURRUULRRRUDLURDLLDLLDULUUDRRLDLLLDRLRUDLUULDLDRUDUDURDRUDRDDDLRLULLUR
-LRLUUURRLRRRRRUURRLLULRLULLDLUDLUDRDDRLDLRLULLURDURLURDLLRLDUUDDURRRRLDLLRULLRLDLLUUDRLDDLLDRULDRLLRURDLRURRUDLULLRURDLURRURUDULLDRLLUUULUDRURRUUDUDULUUULRLDDULDRDLUDDUDDDLRURULLDLLLRLLUURDLRUDLLLLDLLRLRUUUDDRUUUUDLDLRDDURLDURUULLLUUDLLLLDULRRRLLDLDRRDRLUDRUDURLLUDLRLLUDUDRDDDRDLRDLRULUULDRLUDLRLDUURLRRLUDDDUUDDDUDRLDLDUDLURUULLDDDURUUULRLUDLDURUUDRDRURUDDUURDUUUDLLDLDLDURUURLLLLRURUURURULRULLRUDLRRUUUUUDRRLLRDDUURDRDRDDDUDRLURDRRRUDLLLDURDLUUDLLUDDULUUDLDUUULLDRDLRURUURRDURRDLURRRRLLUUULRDULDDLDUURRDLDLLULRRLLUDLDUDLUUL"
-
 
 keyPad : KeyPad
 keyPad = 
-    Array.fromList 
-        [ Array.fromList [ 0, 0, 0 ,0 ,0 ]
-        , Array.fromList [ 0, 1, 2 ,3 ,0 ]
-        , Array.fromList [ 0, 4, 5 ,6 ,0 ]
-        , Array.fromList [ 0, 7, 8 ,9 ,0 ]
-        , Array.fromList [ 0, 0, 0, 0 ,0 ]
+    fromList 
+        [ fromList [ "0", "0", "0", "0", "0" ]
+        , fromList [ "0", "1", "2", "3", "0" ]
+        , fromList [ "0", "4", "5", "6", "0" ]
+        , fromList [ "0", "7", "8", "9", "0" ]
+        , fromList [ "0", "0", "0", "0", "0" ]
         ]
-
 
 starPad : KeyPad
 starPad =
-    Array.fromList
-        [ Array.fromList [ 0, 0, 0 , 0 , 0,  0, 0 ]
-        , Array.fromList [ 0, 0, 0 , 1 , 0,  0, 0 ]
-        , Array.fromList [ 0, 0, 2 , 3 , 4,  0, 0 ]
-        , Array.fromList [ 0, 5, 6 , 7 , 8,  9, 0 ]
-        , Array.fromList [ 0, 0, 10, 11, 12, 0, 0 ]
-        , Array.fromList [ 0, 0, 0 , 13, 0,  0, 0 ]
-        , Array.fromList [ 0, 0, 0 , 0 , 0,  0, 0 ]
+    fromList
+        [ fromList [ "0", "0", "0", "0", "0", "0", "0" ]
+        , fromList [ "0", "0", "0", "1", "0", "0", "0" ]
+        , fromList [ "0", "0", "2", "3", "4", "0", "0" ]
+        , fromList [ "0", "5", "6", "7", "8", "9", "0" ]
+        , fromList [ "0", "0", "A", "B", "C", "0", "0" ]
+        , fromList [ "0", "0", "0", "D", "0", "0", "0" ]
+        , fromList [ "0", "0", "0", "0", "0", "0", "0" ]
         ]
 
-pos : Position
-pos = 
-    ( 1, 1 )
+keyPos : Position
+keyPos = (2, 2)
+
+starPos : Position
+starPos = (3, 3)
+
 
 getRow : KeyPad -> Int -> KeyRow
 getRow pad index = 
-     case Array.get index pad of
+     case get index pad of
         Just val ->
             val
         Nothing ->
-            Array.initialize 3 (always 0)
+            initialize (length pad) (always "0")
      
 
 
 getCol : KeyRow -> Int -> Key
 getCol row index =
-    case Array.get index row of
+    case get index row of
         Just val ->
             val
         Nothing ->
-            0  
+            "0"  
 
 
 getKey : KeyPad -> Position -> Key
@@ -79,54 +69,66 @@ getKey keyPad ( x, y ) =
         key
 
 
-move : String -> Position -> Position
-move instruction (x, y)  = 
-    case instruction of
-        "U" -> shiftUp ( x, y )
-        "D" -> shiftDown ( x, y )
-        "L" -> shiftLeft ( x, y )
-        "R" -> shiftRight ( x, y )
-        _ -> ( 0 , 0 )
+move : KeyPad -> String -> Position -> Position
+move keyPad instruction (x, y)  = 
+    let
+        newPos = case instruction of
+            "U" -> shiftUp keyPad (x, y)
+            "D" -> shiftDown keyPad (x, y)
+            "L" -> shiftLeft keyPad (x, y)
+            "R" -> shiftRight keyPad (x, y)
+            _ -> (0, 0)
+            
+        _ = Debug.log "moved pos" newPos
+    in
+        newPos
 
 
-shiftUp : Position -> Position
-shiftUp ( x, y ) = 
-    if y > 0 then
-        ( x, y - 1 )
-    else
-        ( x, y )
+shiftUp : KeyPad -> Position -> Position
+shiftUp keyPad (x, y) = 
+    case getKey keyPad (x, y-1) of
+        "0" -> (x, y) 
+        _ -> (x, y-1)
+
+shiftDown : KeyPad -> Position -> Position
+shiftDown keyPad (x, y) = 
+    case getKey keyPad (x, y+1) of
+        "0" -> (x, y) 
+        _ -> (x, y+1)
 
 
-shiftDown : Position -> Position
-shiftDown ( x, y ) = 
-    if y < 2 then
-        ( x, y + 1 )
-    else
-        ( x, y )
+shiftLeft: KeyPad -> Position -> Position
+shiftLeft keyPad (x, y) = 
+    case getKey keyPad (x-1, y) of
+        "0" -> (x, y) 
+        _ -> (x-1, y)
 
 
-shiftLeft : Position -> Position
-shiftLeft ( x, y ) = 
-    if x > 0 then
-        ( x - 1, y  )
-    else
-        ( x, y )
-
-
-shiftRight : Position -> Position
-shiftRight ( x, y ) = 
-    if x < 2 then
-        ( x + 1, y  )
-    else
-        ( x , y )
+shiftRight : KeyPad -> Position -> Position
+shiftRight keyPad (x, y) = 
+    case getKey keyPad (x+1, y) of
+        "0" -> (x, y) 
+        _ -> (x+1, y)
 
 
 processLine: String -> Position -> Position
-processLine inputData (x, y ) = 
+processLine inputData (x, y)   = 
     let
-        commands = String.toList inputData |> List.map String.fromChar 
+        _ = Debug.log "starting pos" (x, y)
         
-        newPosition = List.foldr move ( x , y ) commands
+        commands = String.toList inputData 
+            |> List.map String.fromChar 
+        
+        _ = Debug.log "commands" commands
     in
-        newPosition
+        List.foldr (move keyPad) (x ,y) commands
 
+{-
+processSequence: String -> List Position
+processSequence inputData = 
+    List.scanl processLine keyPos (String.lines inputData)
+
+
+displaySequence =
+    List.map (getKey keyPad) (processSequence testData)
+-}
