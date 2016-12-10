@@ -1,14 +1,12 @@
 module Data.Day4 exposing(..)
 
-import Common exposing (TestRecord)
-
-day4Data : List TestRecord
-day4Data =
-    [ ( "Test One", "aaaaa-bbb-z-y-x-123[abxyz]
+partOneTest = "aaaaa-bbb-z-y-x-123[abxyz]
 a-b-c-d-e-f-g-h-987[abcde]
 not-a-real-room-404[oarel]
-totally-real-room-200[decoy]" )
-    , ( "Test Two", "hqcfqwydw-fbqijys-whqii-huiuqhsx-660[qhiwf]
+totally-real-room-200[decoy]"
+
+
+puzzleInput = "hqcfqwydw-fbqijys-whqii-huiuqhsx-660[qhiwf]
 oxjmxdfkd-pzxsbkdbo-erkq-ixyloxqlov-913[xodkb]
 bpvctixr-eaphixr-vgphh-gthtpgrw-947[smrkl]
 iwcjapey-lhwopey-cnwoo-wymqeoepekj-992[eowpy]
@@ -960,5 +958,4 @@ jshzzpmplk-kfl-klclsvwtlua-331[lkpsz]
 ujoon-eaphixr-vgphh-prfjxhxixdc-193[hyzjx]
 dfcxsqhwzs-qobrm-zcuwghwqg-168[qwcgh]
 bqvvu-ydkykhwpa-klanwpekjo-966[kapvw]
-aoubshwq-pibbm-kcfygvcd-740[wnucy]" )
-    ]
+aoubshwq-pibbm-kcfygvcd-740[wnucy]"

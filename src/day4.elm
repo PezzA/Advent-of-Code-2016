@@ -1,31 +1,41 @@
-module Main exposing (..)
+module Day4 exposing (..)
 
-import Html exposing (..)
-import String
-import Common exposing (TestRecord, stringToInt)
-import Data.Day4 exposing (day4Data)
+import String exposing (toList, fromList, fromChar, split, concat, dropRight, right, slice, contains, lines, join)
+import Char exposing (fromCode, toCode)
+import List exposing (map, reverse, drop, sort, head, filter, foldr, length, take, sortWith)
+import Common exposing (stringToInt)
+import Data.Day4 exposing (puzzleInput, partOneTest)
+
+
+type alias ParsedName =
+    { sectorId : Int
+    , decryptedName : String
+    , isRealRoom : Bool
+    }
+
 
 alphabet : List String
 alphabet =
     "abcdefghijklmnopquvrstwxyz"
-        |> String.toList
-        |> List.map String.fromChar
+        |> toList
+        |> map fromChar
 
-splitRecord : String -> ( Int, Bool )
+
+splitRecord : String -> ParsedName
 splitRecord input =
     let
         array =
-            String.split "-" input
-                |> List.reverse
+            split "-" input
+                |> reverse
 
         nameParts =
-            String.concat (List.drop 1 array)
-                |> String.toList
-                |> List.sort
-                |> String.fromList
+            concat (drop 1 array)
+                |> toList
+                |> sort
+                |> fromList
 
         checkSector =
-            case List.head array of
+            case head array of
                 Just val ->
                     val
 
@@ -33,58 +43,93 @@ splitRecord input =
                     ""
 
         sectorId =
-            String.dropRight 7 checkSector
+            dropRight 7 checkSector
                 |> stringToInt
 
         checkSum =
-            String.right 7 checkSector
-                |> String.slice 1 6
+            right 7 checkSector
+                |> slice 1 6
 
-        occurrences = List.map (checkString nameParts) alphabet
-            |> List.sortWith occurenceCompare
-            |> List.reverse
-            |> List.take 5
-            |> List.map snd
-            |> String.concat
+        occurrences =
+            map (checkString nameParts) alphabet
+                |> sortWith occurenceCompare
+                |> reverse
+                |> take 5
+                |> map snd
+                |> concat
     in
-        ( sectorId,  checkSum == occurrences )
+        ParsedName sectorId (rotateString sectorId (join "-" (reverse (drop 1 array)))) (checkSum == occurrences)
+
 
 occurenceCompare a b =
     case compare (fst a) (fst b) of
-      EQ -> compare (snd b) (snd a)
-      order -> order
+        EQ ->
+            compare (snd b) (snd a)
 
-checkString: String -> String -> ( Int, String )
+        order ->
+            order
+
+
+checkString : String -> String -> ( Int, String )
 checkString test compare =
     let
-        count = String.toList test
-            |> List.map String.fromChar
-            |> List.filter (\ a -> a == compare )
-            |> List.length
+        count =
+            toList test
+                |> map fromChar
+                |> filter (\a -> a == compare)
+                |> length
     in
         ( count, compare )
 
 
 roomChecker : List String -> Int
 roomChecker lines =
-    List.map splitRecord lines
-        |> List.filter (\ a -> snd a)
-        |> List.foldr (\ ( a, b) c -> a + c) 0
+    map splitRecord lines
+        |> filter (\a -> a.isRealRoom)
+        |> foldr (\a b -> a.sectorId + b) 0
 
 
-
-testResultRow : TestRecord -> Html msg
-testResultRow ( name, test ) =
-    tr []
-        [ td [] [ text name ]
-        , td [] [ text (toString (roomChecker (String.lines test))) ]
-        ]
+roomNameChecker : List String -> List ParsedName
+roomNameChecker lines =
+    map splitRecord lines
+        |> filter (\a -> contains "northpole" a.decryptedName)
 
 
-main =
-    div []
-        [ h1 [] [ text "Day Three" ]
-        , h2 [] [ text (toString alphabet) ]
-        , table [] (List.map testResultRow day4Data)
-        , h2 [] [ text "Second Star" ]
-        ]
+rotateLetter : Int -> Char -> Char
+rotateLetter shift input =
+    let
+        newCode =
+            (toCode input) + shift
+    in
+        if newCode < 123 then
+            fromCode newCode
+        else
+            fromCode (newCode - 26)
+
+
+decodeLetter : Int -> Char -> Char
+decodeLetter shift input =
+    case input of
+        '-' ->
+            ' '
+
+        _ ->
+            rotateLetter (shift % 26) input
+
+
+rotateString : Int -> String -> String
+rotateString shift input =
+    map (decodeLetter shift) (toList input)
+        |> fromList
+
+
+doTestOne =
+    roomChecker (lines partOneTest)
+
+
+doPartOne =
+    roomChecker (lines puzzleInput)
+
+
+doPartTwo =
+    roomNameChecker (lines puzzleInput)

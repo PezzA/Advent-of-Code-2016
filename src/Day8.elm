@@ -6,29 +6,36 @@ import Array exposing (repeat, Array, map, foldr, slice, indexedMap, length, fro
 import Data.Day8 exposing (day8Data)
 import Common exposing (textListToDiv)
 
+
 type alias Display =
     Array (Array Bool)
+
 
 display : Display
 display =
     repeat 6 (repeat 50 False)
+
 
 renderPixel : Bool -> String
 renderPixel value =
     case value of
         False ->
             "."
+
         True ->
             "#"
+
 
 renderLine : Array Bool -> String
 renderLine displayData =
     foldr (\a -> append (renderPixel a)) "" displayData
 
+
 renderDisplay : Display -> List String
 renderDisplay display =
     map renderLine display
         |> Array.toList
+
 
 rect : Int -> Int -> Display -> Display
 rect x y displayData =
@@ -48,16 +55,18 @@ rect x y displayData =
         )
         displayData
 
+
 shiftedPos : Int -> Int -> Int -> Int
 shiftedPos val shift length =
     (val - (shift - length)) % length
 
-rotateCol : Int -> Int -> Display -> Display
-rotateCol col shift displayData =
-    let
-        actualShift =
-            shift % length displayData
 
-           
-    in
 
+--rotateCol : Int -> Int -> Display -> Display
+--rotateCol col shift displayData =
+--    let
+--       actualShift =
+--          shift % length displayData-
+--
+--
+-- in

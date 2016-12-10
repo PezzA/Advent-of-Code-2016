@@ -3,17 +3,28 @@ module Day2 exposing (..)
 import String
 import Array exposing (fromList, length, Array, get, initialize)
 import List exposing (foldr)
-
 import Data.Day2 exposing (testData, puzzleInput)
 
-type alias KeyPad = Array (Array String)
-type alias KeyRow = Array String
-type alias Key = String
-type alias Position = ( Int, Int )
 
-keyPad : KeyPad
-keyPad = 
-    fromList 
+type alias KeyPad =
+    Array (Array String)
+
+
+type alias KeyRow =
+    Array String
+
+
+type alias Key =
+    String
+
+
+type alias Position =
+    ( Int, Int )
+
+
+keyPadSpec : KeyPad
+keyPadSpec =
+    fromList
         [ fromList [ "0", "0", "0", "0", "0" ]
         , fromList [ "0", "1", "2", "3", "0" ]
         , fromList [ "0", "4", "5", "6", "0" ]
@@ -21,8 +32,9 @@ keyPad =
         , fromList [ "0", "0", "0", "0", "0" ]
         ]
 
-starPad : KeyPad
-starPad =
+
+starPadSpec : KeyPad
+starPadSpec =
     fromList
         [ fromList [ "0", "0", "0", "0", "0", "0", "0" ]
         , fromList [ "0", "0", "0", "1", "0", "0", "0" ]
@@ -33,21 +45,25 @@ starPad =
         , fromList [ "0", "0", "0", "0", "0", "0", "0" ]
         ]
 
+
 keyPos : Position
-keyPos = (2, 2)
+keyPos =
+    ( 2, 2 )
+
 
 starPos : Position
-starPos = (3, 3)
+starPos =
+    ( 3, 3 )
 
 
 getRow : KeyPad -> Int -> KeyRow
-getRow pad index = 
-     case get index pad of
+getRow pad index =
+    case get index pad of
         Just val ->
             val
+
         Nothing ->
             initialize (length pad) (always "0")
-     
 
 
 getCol : KeyRow -> Int -> Key
@@ -55,80 +71,110 @@ getCol row index =
     case get index row of
         Just val ->
             val
+
         Nothing ->
-            "0"  
+            "0"
 
 
 getKey : KeyPad -> Position -> Key
-getKey keyPad ( x, y ) = 
+getKey keyPad ( x, y ) =
     let
-        row = getRow keyPad y
+        row =
+            getRow keyPad y
 
-        key = getCol row x
-    in 
+        key =
+            getCol row x
+    in
         key
 
 
 move : KeyPad -> String -> Position -> Position
-move keyPad instruction (x, y)  = 
-    let
-        newPos = case instruction of
-            "U" -> shiftUp keyPad (x, y)
-            "D" -> shiftDown keyPad (x, y)
-            "L" -> shiftLeft keyPad (x, y)
-            "R" -> shiftRight keyPad (x, y)
-            _ -> (0, 0)
-            
-        _ = Debug.log "moved pos" newPos
-    in
-        newPos
+move keyPad instruction ( x, y ) =
+    case instruction of
+        "U" ->
+            shiftUp keyPad ( x, y )
+
+        "D" ->
+            shiftDown keyPad ( x, y )
+
+        "L" ->
+            shiftLeft keyPad ( x, y )
+
+        "R" ->
+            shiftRight keyPad ( x, y )
+
+        _ ->
+            ( 0, 0 )
 
 
 shiftUp : KeyPad -> Position -> Position
-shiftUp keyPad (x, y) = 
-    case getKey keyPad (x, y-1) of
-        "0" -> (x, y) 
-        _ -> (x, y-1)
+shiftUp keyPad ( x, y ) =
+    case getKey keyPad ( x, y - 1 ) of
+        "0" ->
+            ( x, y )
+
+        _ ->
+            ( x, y - 1 )
+
 
 shiftDown : KeyPad -> Position -> Position
-shiftDown keyPad (x, y) = 
-    case getKey keyPad (x, y+1) of
-        "0" -> (x, y) 
-        _ -> (x, y+1)
+shiftDown keyPad ( x, y ) =
+    case getKey keyPad ( x, y + 1 ) of
+        "0" ->
+            ( x, y )
+
+        _ ->
+            ( x, y + 1 )
 
 
-shiftLeft: KeyPad -> Position -> Position
-shiftLeft keyPad (x, y) = 
-    case getKey keyPad (x-1, y) of
-        "0" -> (x, y) 
-        _ -> (x-1, y)
+shiftLeft : KeyPad -> Position -> Position
+shiftLeft keyPad ( x, y ) =
+    case getKey keyPad ( x - 1, y ) of
+        "0" ->
+            ( x, y )
+
+        _ ->
+            ( x - 1, y )
 
 
 shiftRight : KeyPad -> Position -> Position
-shiftRight keyPad (x, y) = 
-    case getKey keyPad (x+1, y) of
-        "0" -> (x, y) 
-        _ -> (x+1, y)
+shiftRight keyPad ( x, y ) =
+    case getKey keyPad ( x + 1, y ) of
+        "0" ->
+            ( x, y )
+
+        _ ->
+            ( x + 1, y )
 
 
-processLine: String -> Position -> Position
-processLine inputData (x, y)   = 
+processLine : KeyPad -> String -> Position -> Position
+processLine pad inputData ( x, y ) =
     let
-        _ = Debug.log "starting pos" (x, y)
-        
-        commands = String.toList inputData 
-            |> List.map String.fromChar 
-        
-        _ = Debug.log "commands" commands
+        commands =
+            String.toList inputData
+                |> List.map String.fromChar
     in
-        List.foldr (move keyPad) (x ,y) commands
-
-{-
-processSequence: String -> List Position
-processSequence inputData = 
-    List.scanl processLine keyPos (String.lines inputData)
+        List.foldl (move pad) ( x, y ) commands
 
 
-displaySequence =
-    List.map (getKey keyPad) (processSequence testData)
--}
+processSequence : KeyPad -> String -> List Position
+processSequence keyPad inputData =
+    List.scanl (processLine keyPad) keyPos (String.lines inputData)
+        |> List.drop 1
+
+
+displaySequence : KeyPad -> String -> List String
+displaySequence pad instructions =
+    List.map (getKey pad) (processSequence pad instructions)
+
+
+doTest =
+    displaySequence keyPadSpec testData
+
+
+doPartOne =
+    displaySequence keyPadSpec puzzleInput
+
+
+doPartTwo =
+    displaySequence starPadSpec puzzleInput
