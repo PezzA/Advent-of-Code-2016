@@ -9,10 +9,10 @@ import Common exposing (..)
 
 
 type alias Marker = 
-    { prefix: String,
-      command: (Int, String),
+    { --prefix: String,
+      --command: (Int, String),
       remainder: String,
-      out : String,
+      --out : String,
       outLength: Int
     }
 
@@ -22,21 +22,26 @@ nextMarker =
     regex "[(]([0-9]+)x([0-9]+)[)]"
 
 
-getPart: String -> Regex.Match -> Marker
+getPart: String -> Regex.Match -> List Marker
 getPart dataInput match = 
     let
-        matchLength = String.length match.match
-        
+        matchLength = String.length match.match    
+        matchOffset = match.index + matchLength
         matchBits = Array.fromList match.submatches
         
-        toTake = arrayBitToInt 0 matchBits
+        repeatLength = arrayBitToInt 0 matchBits
+        repeats = arrayBitToInt 1 matchBits
+        
+        repeatString = String.slice matchOffset (matchOffset + repeatLength) dataInput
+        
+        prefix = String.slice 0 match.index dataInput
+        
+        remainder = (String.slice (matchOffset + repeatLength) (String.length dataInput) dataInput)
     in
-        Marker
-            (String.slice 0 match.index dataInput)
-            ( arrayBitToInt 1 matchBits , String.slice (match.index + matchLength) (match.index + matchLength + toTake) dataInput )
-            (String.slice (match.index + matchLength + toTake) (String.length dataInput) dataInput)
-            ((String.slice 0 match.index dataInput) ++ (String.repeat (arrayBitToInt 1 matchBits) (String.slice (match.index + matchLength) (match.index + matchLength + toTake) dataInput)))
-            ((arrayBitToInt 1 matchBits) * (String.length (String.slice (match.index + matchLength) (match.index + matchLength + toTake) dataInput)))
+        if not (String.isEmpty remainder) then
+            getParts remainder
+        else 
+            [ Marker remainder (repeats * (String.length repeatString)) ]
              
             
 
@@ -51,7 +56,7 @@ getParts data =
                 (\a -> getPart data a)
                 next
         else
-            [ Marker data (0,"") "" "" (String.length data) ]
+            [ Marker "" (String.length data) ]
         
    
 getAllParts data =
@@ -69,6 +74,6 @@ getAllParts data =
             newData
     
 doPartOne data = 
-    ( String.concat (List.map (\a -> a.out) (getAllParts data)), List.foldr (\a b -> a.outLength + b ) 0 (getAllParts data))
+    ( "", List.foldr (\a b -> a.outLength + b ) 0 (getAllParts data))
     
     
