@@ -4,6 +4,7 @@ import String exposing (lines, append)
 import Array exposing (repeat, Array, map, foldr, slice, indexedMap, length, fromList, get)
 import Data.Day8 exposing (day8Data)
 import Regex exposing (..)
+import Common exposing (renderPixel)
 
 
 type Instruction
@@ -93,16 +94,6 @@ type alias Display =
 blankDisplay : Display
 blankDisplay =
     repeat 6 (repeat 50 False)
-
-
-renderPixel : Bool -> String
-renderPixel value =
-    case value of
-        False ->
-            "."
-
-        True ->
-            "#"
 
 
 renderLine : Array Bool -> String

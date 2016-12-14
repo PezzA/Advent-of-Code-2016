@@ -30,3 +30,13 @@ arrayBitToInt index array =
 
         Nothing ->
             -1
+            
+renderPixel : Bool -> String
+renderPixel value =
+    case value of
+        False ->
+            "."
+
+        True ->
+            "#"
+            

@@ -1,4 +1,4 @@
-module Data.DayTemp exposing (..)
+module Data.Day10 exposing (..)
 
 day10TestInput = "value 5 goes to bot 2
 bot 2 gives low to bot 1 and high to bot 0
