@@ -10,7 +10,7 @@ stringToInt input =
             val
 
         Err err ->
-            0
+            -1
             
 
 arrayBitToInt index array =
