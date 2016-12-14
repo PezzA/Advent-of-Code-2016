@@ -1,21 +1,13 @@
 module Day1 exposing (..)
 
 import String
+import Array exposing (..)
 
-
-testOne : String
-testOne =
-    "R2, L3"
-
-
-puzzleInput: String
-puzzleInput = "R1, R1, R3, R1, R1, L2, R5, L2, R5, R1, R4, L2, R3, L3, R4, L5, R4, R4, R1, L5, L4, R5, R3, L1, R4, R3, L2, L1, R3, L4, R3, L2, R5, R190, R3, R5, L5, L1, R54, L3, L4, L1, R4, R1, R3, L1, L1, R2, L2, R2, R5, L3, R4, R76, L3, R4, R191, R5, R5, L5, L4, L5, L3, R1, R3, R2, L2, L2, L4, L5, L4, R5, R4, R4, R2, R3, R4, L3, L2, R5, R3, L2, L1, R2, L3, R2, L1, L1, R1, L3, R5, L5, L1, L2, R5, R3, L3, R3, R5, R2, R5, R5, L5, L5, R2, L3, L5, L2, L1, R2, R2, L2, R2, L3, L2, R3, L5, R4, L4, L5, R3, L4, R1, R3, R2, R4, L2, L3, R2, L5, R5, R4, L2, R4, L1, L3, L1, L3, R1, R2, R1, L5, R5, R3, L3, L3, L2, R4, R2, L5, L1, L1, L5, L4, L1, L1, R1"
-
-
-instructions : String -> List String
+instructions : String -> Array String
 instructions input =
     String.split "," input
         |> List.map String.trim
+        |> Array.fromList
 
 
 turnLeft : Int -> Int
@@ -86,16 +78,16 @@ translateLeft : Int -> Int -> ( Int, Int ) -> ( Int, Int )
 translateLeft orientation shift ( x, y ) =
     case orientation of
         0 ->
-            ( x - shift, y )
+            ( x , y - shift )
 
         90 ->
-            ( x, y + shift )
+            ( x - 1, y)
 
         180 ->
-            ( x + shift, y )
+            ( x , y + shift)
 
         270 ->
-            ( x, y - shift )
+            ( x + shift, y )
 
         _ ->
             ( 0, 0 )
@@ -105,16 +97,16 @@ translateRight : Int -> Int -> ( Int, Int ) -> ( Int, Int )
 translateRight orientation shift ( x, y ) =
     case orientation of
         0 ->
-            ( x + shift, y )
+            ( x , y + shift )
 
         90 ->
-            ( x, y - shift )
+            ( x + shift, y)
 
         180 ->
-            ( x - shift, y )
+            ( x, y - shift )
 
         270 ->
-            ( x, y + shift )
+            ( x - shift, y )
 
         _ ->
             ( 0, 0 )
@@ -147,7 +139,9 @@ move instruction ( x, y, orientation ) =
             orientate direction orientation
 
         ( newX, newY ) =
-            translate direction newOrientation shift ( x, y )
+            Array.foldr (\a (b, c) -> translate direction newOrientation 1 ( b, c )) (x,y) (fromList [1..shift])
+        _ = Debug.log ":" instruction
+        _ = Debug.log ":" (List.drop 1 (List.scanl (\a (b, c) -> translate direction newOrientation 1 ( b, c )) (x,y) [1..shift]))
     in
         ( newX, newY, newOrientation )
 
@@ -159,4 +153,4 @@ getBlocks ( x, y, orientation ) =
 
 runCommands : String -> Float
 runCommands input =
-    getBlocks (List.foldr move ( 0, 0, 0 ) (instructions input))
+    getBlocks (Array.foldr move ( 0, 0, 0 ) (instructions input))
