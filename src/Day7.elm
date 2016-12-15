@@ -47,7 +47,7 @@ hasAbba input =
         maxLen =
             (length input) - 4
     in
-        map (\a -> isAbba (slice a (a + 4) input)) [0..maxLen]
+        map (\a -> isAbba (slice a (a + 4) input)) (List.range 0 maxLen)
             |> any (\a -> a)
 
 
@@ -57,7 +57,7 @@ hasAba input =
         maxLen =
             (length input) - 3
     in
-        map (\a -> isAba (slice a (a + 3) input)) [0..maxLen]
+        map (\a -> isAba (slice a (a + 3) input)) (List.range 0 maxLen)
             |> any (\a -> a)
 
 
@@ -67,7 +67,7 @@ getAbas input =
         maxLen =
             (length input) - 3
     in
-        map (\a -> ( (slice a (a + 3) input), isAba (slice a (a + 3) input) )) [0..maxLen]
+        map (\a -> ( (slice a (a + 3) input), isAba (slice a (a + 3) input) )) (List.range 0 maxLen)
             |> filter (\( a, b ) -> b)
             |> map (\( a, b ) -> a)
 

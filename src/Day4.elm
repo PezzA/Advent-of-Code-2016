@@ -55,16 +55,16 @@ splitRecord input =
                 |> sortWith occurenceCompare
                 |> reverse
                 |> take 5
-                |> map snd
+                |> map Tuple.second
                 |> concat
     in
         ParsedName sectorId (rotateString sectorId (join "-" (reverse (drop 1 array)))) (checkSum == occurrences)
 
 
 occurenceCompare a b =
-    case compare (fst a) (fst b) of
+    case compare (Tuple.first a) (Tuple.first b) of
         EQ ->
-            compare (snd b) (snd a)
+            compare (Tuple.second b) (Tuple.second a)
 
         order ->
             order

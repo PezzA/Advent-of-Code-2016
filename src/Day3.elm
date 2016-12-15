@@ -79,21 +79,21 @@ loadColumnData data =
             List.map stringToTriangle (List.take 3 data)
     in
         if List.length data > 0 then
-            List.append  (rowsToCols triangles)  (loadColumnData (List.drop 3 data))
+            List.append (rowsToCols triangles) (loadColumnData (List.drop 3 data))
         else
             (rowsToCols triangles)
+
 
 testColResults : String -> List Bool
 testColResults test =
     List.map validTriangle (loadColumnData (String.lines test))
 
 
-
 testTableRow2 : TestRecord -> Html msg
 testTableRow2 ( name, test ) =
     tr []
         [ td [] [ text name ]
-         , td [] [ text (toString (successCount (testColResults test))) ]
+        , td [] [ text (toString (successCount (testColResults test))) ]
         ]
 
 

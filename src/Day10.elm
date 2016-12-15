@@ -4,7 +4,6 @@ import Regex exposing (regex, Regex, HowMany, find, Match)
 import Array exposing (slice, fromList, Array, get)
 import String exposing (toInt)
 import Maybe exposing (withDefault)
-
 import Data.Day10 exposing (..)
 
 
@@ -26,7 +25,7 @@ commandRegex =
 
 
 getSubMatch : Array (Maybe String) -> Int -> String
-getSubMatch subMatchArray index  =
+getSubMatch subMatchArray index =
     case (Array.get index subMatchArray) of
         Just val ->
             Maybe.withDefault "" val
@@ -54,8 +53,8 @@ getRecipient device index =
 
 parseMatch : Match -> Instruction
 parseMatch match =
-    let  
-        subMatchPartial = 
+    let
+        subMatchPartial =
             getSubMatch (Array.fromList match.submatches)
     in
         case (subMatchPartial 0) of

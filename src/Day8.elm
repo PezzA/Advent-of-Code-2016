@@ -177,7 +177,7 @@ rotateCol col shift displayData =
     in
         Array.foldr (\row disp -> setPixel disp row col (getPixel displayData col (shiftedPos row actualShift len)))
             displayData
-            (fromList ([0..(len - 1)]))
+            (fromList (List.range 0 (len - 1)))
 
 
 rotateRow row shift displayData =
@@ -233,6 +233,7 @@ doPartOne data =
 pixelCountDisplay display =
     foldr (\row count -> count + length ((Array.filter (\b -> b) row))) 0 display
 
+
+
 -- pixelCountDisplay (doPartOne day8Data
 -- doPartOne day8Data
-

@@ -305,19 +305,19 @@ hex_ x k ( a, b, c, d ) =
             b16 =
                 ii b15 c16 d16 a16 (iget (k + 9) x) s44 0xEB86D391
 
-            a' =
+            a_ =
                 addUnsigned a00 a16
 
-            b' =
+            b_ =
                 addUnsigned b00 b16
 
-            c' =
+            c_ =
                 addUnsigned c00 c16
 
-            d' =
+            d_ =
                 addUnsigned d00 d16
         in
-            hex_ x (k + 16) ( a', b', c', d' )
+            hex_ x (k + 16) ( a_, b_, c_, d_ )
 
 
 convertToWordArray : String -> Array Int
@@ -367,10 +367,10 @@ convertToWordArray_ input byteCount messageLength words =
                             0
 
                         Just ( c, _ ) ->
-                            Char.toCode c `shiftLeft` bytePosition
+                            shiftLeft (Char.toCode c) bytePosition
 
                 newWord =
-                    oldWord `or` code
+                    or oldWord code
 
                 newWords =
                     Array.set wordCount newWord words
@@ -382,18 +382,18 @@ convertToWordArray_ input byteCount messageLength words =
                     Array.length words
 
                 code =
-                    0x80 `shiftLeft` bytePosition
+                    shiftLeft 0x80 bytePosition
 
                 newWord =
-                    oldWord `or` code
+                    or oldWord code
 
                 tmp1 =
                     Array.set wordCount newWord words
 
                 tmp2 =
-                    Array.set (numberOfWords - 2) (messageLength `shiftLeft` 3) tmp1
+                    Array.set (numberOfWords - 2) (shiftLeft messageLength 3) tmp1
             in
-                Array.set (numberOfWords - 1) (messageLength `shiftRightLogical` 29) tmp2
+                Array.set (numberOfWords - 1) (shiftRightLogical messageLength 29) tmp2
 
 
 utf8Encode : String -> String
@@ -420,9 +420,9 @@ utf8Encode_ input output =
                         if c < 128 then
                             output ++ String.fromChar nextChar
                         else if c < 2048 then
-                            output ++ ((c `shiftRight` 6) `or` 192 |> Char.fromCode |> String.fromChar) ++ ((c `and` 63) `or` 128 |> Char.fromCode |> String.fromChar)
+                            output ++ (or (shiftRight c 6) 192 |> Char.fromCode |> String.fromChar) ++ (or (and c 63) 128 |> Char.fromCode |> String.fromChar)
                         else
-                            output ++ ((c `shiftRight` 12) `or` 224 |> Char.fromCode |> String.fromChar) ++ (((c `shiftRight` 6) `and` 63) `or` 128 |> Char.fromCode |> String.fromChar) ++ ((c `and` 63) `or` 128 |> Char.fromCode |> String.fromChar)
+                            output ++ (or (shiftRight c 12) 224 |> Char.fromCode |> String.fromChar) ++ (or (and (shiftRight c 6) 63) 128 |> Char.fromCode |> String.fromChar) ++ (or (and c 63) 128 |> Char.fromCode |> String.fromChar)
                 in
                     utf8Encode_ remainingInput newOutput
 
@@ -439,7 +439,7 @@ wordToHex_ input index output =
     else
         let
             byte =
-                (input `shiftRightLogical` (index * 8)) `and` 255
+                and (shiftRightLogical input (index * 8)) 255
 
             tmp2 =
                 toHex byte
@@ -471,36 +471,36 @@ toHex i =
 
 rotateLeft : Int -> Int -> Int
 rotateLeft input bits =
-    (input `shiftLeft` bits) `or` (input `shiftRightLogical` (32 - bits))
+    or (shiftLeft input bits) (shiftRightLogical input (32 - bits))
 
 
 addUnsigned : Int -> Int -> Int
 addUnsigned x y =
     let
         x8 =
-            x `and` 0x80000000
+            and x 0x80000000
 
         y8 =
-            y `and` 0x80000000
+            and y 0x80000000
 
         x4 =
-            x `and` 0x40000000
+            and x 0x40000000
 
         y4 =
-            y `and` 0x40000000
+            and y 0x40000000
 
         result =
-            (x `and` 0x3FFFFFFF) + (y `and` 0x3FFFFFFF)
+            (and x 0x3FFFFFFF) + (and y 0x3FFFFFFF)
     in
-        if x4 `and` y4 > 0 then
-            result `ixor` 0x80000000 `ixor` x8 `ixor` y8
-        else if x4 `or` y4 > 0 then
-            if result `and` 0x40000000 > 0 then
-                result `ixor` 0xC0000000 `ixor` x8 `ixor` y8
+        if and x4 y4 > 0 then
+            ixor (ixor (ixor result 0x80000000) x8) y8
+        else if or x4 y4 > 0 then
+            if and result 0x40000000 > 0 then
+                ixor (ixor (ixor result 0xC0000000) x8) y8
             else
-                result `ixor` 0x40000000 `ixor` x8 `ixor` y8
+                ixor (ixor (ixor result 0x40000000) x8) y8
         else
-            result `ixor` x8 `ixor` y8
+            ixor (ixor result x8) y8
 
 
 ixor : Int -> Int -> Int
@@ -515,22 +515,22 @@ iget index array =
 
 f : Int -> Int -> Int -> Int
 f x y z =
-    (x `and` y) `or` ((complement x) `and` z)
+    or (and x y) (and (complement x) z)
 
 
 g : Int -> Int -> Int -> Int
 g x y z =
-    (x `and` z) `or` (y `and` (complement z))
+    or (and x z) (and y (complement z))
 
 
 h : Int -> Int -> Int -> Int
 h x y z =
-    x `ixor` y `ixor` z
+    ixor (ixor x y) z
 
 
 i : Int -> Int -> Int -> Int
 i x y z =
-    y `ixor` (x `or` (complement z))
+    ixor y (or x (complement z))
 
 
 ff : Int -> Int -> Int -> Int -> Int -> Int -> Int -> Int

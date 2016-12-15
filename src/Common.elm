@@ -3,6 +3,7 @@ module Common exposing (..)
 import Array exposing (get)
 import String
 
+
 stringToInt : String -> Int
 stringToInt input =
     case String.toInt input of
@@ -11,7 +12,7 @@ stringToInt input =
 
         Err err ->
             -1
-            
+
 
 arrayBitToInt index array =
     case Array.get index array of
@@ -30,7 +31,8 @@ arrayBitToInt index array =
 
         Nothing ->
             -1
-            
+
+
 renderPixel : Bool -> String
 renderPixel value =
     case value of
@@ -39,4 +41,3 @@ renderPixel value =
 
         True ->
             "#"
-            
