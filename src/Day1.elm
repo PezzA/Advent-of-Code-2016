@@ -1,5 +1,3 @@
-module Main exposing (..)
-
 import Html exposing (..)
 import String
 import Array exposing (..)
