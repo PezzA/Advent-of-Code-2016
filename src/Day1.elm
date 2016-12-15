@@ -1,6 +1,12 @@
+module Main exposing (..)
+
 import Html exposing (..)
-import String
+import String exposing (split)
 import Array exposing (..)
+import Svg exposing (..)
+import Svg.Attributes exposing (..)
+import Time exposing (Time, second)
+
 
 
 testOne =
@@ -20,15 +26,20 @@ puzzleInput =
 
 
 
--- START ELM ARC BOILERPLATE -----------------
+-- ELM ARC BOILERPLATE -----------------
 
 
 type Msg
-    = NoOp
+    = Tick Time
+    | NoOp
 
 
 type alias Model =
-    String
+    { puzzleInput : String
+    , frame : Int
+    , canvWidth : Int
+    , canvHeight : Int
+    }
 
 
 main =
@@ -43,23 +54,64 @@ main =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        Tick newTime ->
+          ( { model | frame = model.frame + 1 }, Cmd.none)
         NoOp ->
             ( model, Cmd.none )
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( puzzleInput, Cmd.none )
+    ( Model puzzleInput 0 1800 800, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+   Time.every (100 * Time.millisecond) Tick
+
+
+drawGrid gridX gridY step =
+    let
+        strX =
+            toString gridX
+
+        strY =
+            toString gridY
+
+        cellX =
+            gridX // step
+
+        cellY =
+            gridY // step
+    in
+        (rect [ x "0", y "0", width strX, height strY, fill "#DDDDDD", stroke "#000000" ] []
+            :: (Array.toList
+                    (Array.map (\a -> line [ x1 (toString a), y1 "0", x2 (toString a), y2 strY, stroke "#FFFFFF", strokeWidth "5" ] [])
+                        (initialize cellX (\n -> n * step))
+                    )
+               )
+            ++ (Array.toList
+                    (Array.map (\a -> line [ x1 "0", y1 (toString a), x2 strX, y2 (toString a), stroke "#FFFFFF", strokeWidth "5" ] [])
+                        (initialize cellY (\n -> n * step))
+                    )
+               )
+        )
 
 
 view : Model -> Html Msg
 view model =
-    text (toString (runCommands puzzleInput))
+    let
+        strX =
+            toString model.canvWidth
+
+        strY =
+            toString model.canvHeight
+    in
+        div []
+            [ svg [ width (toString model.canvWidth), height (toString model.canvHeight), viewBox ("0 0 " ++ strX ++ " " ++ strY), shapeRendering "optimizeSpeed" ]
+                (drawGrid model.canvWidth model.canvHeight 25)
+            , span [] [ Html.text (toString model.frame) ]
+            ]
 
 
 
