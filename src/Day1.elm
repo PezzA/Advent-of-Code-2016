@@ -30,12 +30,13 @@ type alias Model =
     , canvWidth : Int
     , canvHeight : Int
     , pathWay : List Position
+    , crossedPath: Bool
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model (instructions puzzleInput) 0 1800 800 [ ( [], 0 ) ], Cmd.none )
+    ( Model (instructions puzzleInput) 0 500 500 [ ( [], 0 ) ] False, Cmd.none )
 
 
 main =
@@ -80,7 +81,7 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.none
-
+ 
 
 drawGrid : Int -> Int -> Int -> List (Svg msg)
 drawGrid gridX gridY step =
@@ -142,7 +143,7 @@ view model =
         div []
             [ div []
                 [ svg [ width (toString model.canvWidth), height (toString model.canvHeight), viewBox ("0 0 " ++ strX ++ " " ++ strY), shapeRendering "optimizeSpeed" ]
-                    (drawGrid model.canvWidth model.canvHeight 25);lkjggggggdddddddd
+                    (drawGrid model.canvWidth model.canvHeight 25)
                 ]
             , div []
                 [ button [ onClick Forward ] [ Html.text "Forward Step" ]
