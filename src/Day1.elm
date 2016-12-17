@@ -1,12 +1,176 @@
-module Main exposing (..)
+--Remove the module line if you want to use this in /try
+
+
+module Day1 exposing (..)
 
 import Html exposing (..)
+import Html.Events exposing (onClick)
 import String exposing (split)
 import Array exposing (..)
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Time exposing (Time, second)
 
+
+{-
+   Elm architecture section.  Contains all stuff required for elm Html program and any specific UI concerns.
+-}
+
+
+type Msg
+    = Tick Time
+    | Forward
+    | Back
+    | NoOp
+
+
+type alias Model =
+    { instructions : List String
+    , frame : Int
+    , canvWidth : Int
+    , canvHeight : Int
+    , pathWay : List Position
+    }
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( Model (instructions puzzleInput) 0 1800 800 [ ( [], 0 ) ], Cmd.none )
+
+
+main =
+    program
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        Tick newTime ->
+            ( model, Cmd.none )
+
+        Back ->
+            let
+                newFrame =
+                    (clamp 0 (List.length model.instructions) (model.frame - 1))
+
+                updatedPaths =
+                    List.scanl move ( [], 0 ) (List.take newFrame model.instructions)
+            in
+                ( { model | frame = newFrame, pathWay = updatedPaths }, Cmd.none )
+
+        Forward ->
+            let
+                newFrame =
+                    (clamp 0 (List.length model.instructions) (model.frame + 1))
+
+                updatedPaths =
+                    List.scanl move ( [], 0 ) (List.take newFrame model.instructions)
+            in
+                ( { model | frame = newFrame, pathWay = updatedPaths }, Cmd.none )
+
+        NoOp ->
+            ( model, Cmd.none )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
+
+
+drawGrid : Int -> Int -> Int -> List (Svg msg)
+drawGrid gridX gridY step =
+    (rect (rectHelper 0 0 gridX gridY canvasBackGroundStyle) []
+        :: (Array.toList
+                (Array.map (\a -> line (lineHelper a 0 a gridY roadStyle) [])
+                    (initialize (ceiling ((toFloat gridX) / (toFloat step))) (\n -> n * step))
+                )
+           )
+        ++ (Array.toList
+                (Array.map (\a -> line (lineHelper 0 a gridX a roadStyle) [])
+                    (initialize (ceiling ((toFloat gridY) / (toFloat step))) (\n -> n * step))
+                )
+           )
+    )
+
+
+canvasBackGroundStyle =
+    [ fill "#DDDDDD"
+    , stroke "#000000"
+    ]
+
+
+roadStyle =
+    [ strokeWidth "3"
+    , stroke "#FFFFFF"
+    ]
+
+
+rectHelper : Int -> Int -> Int -> Int -> List (Svg.Attribute msg) -> List (Svg.Attribute msg)
+rectHelper iX iY iWidth iHeight styles =
+    [ x (toString iX)
+    , y (toString iY)
+    , width (toString iWidth)
+    , height (toString iHeight)
+    ]
+        ++ styles
+
+
+lineHelper : Int -> Int -> Int -> Int -> List (Svg.Attribute msg) -> List (Svg.Attribute msg)
+lineHelper ix1 iy1 ix2 iy2 styles =
+    [ x1 (toString ix1)
+    , y1 (toString iy1)
+    , x2 (toString ix2)
+    , y2 (toString iy2)
+    ]
+        ++ styles
+
+
+view : Model -> Html Msg
+view model =
+    let
+        strX =
+            toString model.canvWidth
+
+        strY =
+            toString model.canvHeight
+    in
+        div []
+            [ div []
+                [ svg [ width (toString model.canvWidth), height (toString model.canvHeight), viewBox ("0 0 " ++ strX ++ " " ++ strY), shapeRendering "optimizeSpeed" ]
+                    (drawGrid model.canvWidth model.canvHeight 25);lkjggggggdddddddd
+                ]
+            , div []
+                [ button [ onClick Forward ] [ Html.text "Forward Step" ]
+                , button [ onClick Back ] [ Html.text "Back Step" ]
+                , div [] [ Html.text ("Ins:" ++ (toString (List.take model.frame model.instructions))) ]
+                , div [] [ Html.text ("Paths:" ++ (toString model.pathWay)) ]
+                , div [] [ Html.text ("Frame:" ++ (toString model.frame)) ]
+                ]
+            ]
+
+
+covertFromCartesian iX iY iGridX iGridY iStep =
+    ( (iGridX // 2) + (iX * iStep), (iGridY // 2) + (iY * iStep) )
+
+
+
+{-
+   Puzzle processing:  All the stuff below here is specific to the puzzle.  Would normally have this in a separate
+   module, but it's all in-line so the whole thing can be pasted in /try
+-}
+
+
+type alias Point =
+    ( Int, Int )
+
+
+type alias Position =
+    ( List Point, Int )
 
 
 testOne =
@@ -25,104 +189,10 @@ puzzleInput =
     "R1, R1, R3, R1, R1, L2, R5, L2, R5, R1, R4, L2, R3, L3, R4, L5, R4, R4, R1, L5, L4, R5, R3, L1, R4, R3, L2, L1, R3, L4, R3, L2, R5, R190, R3, R5, L5, L1, R54, L3, L4, L1, R4, R1, R3, L1, L1, R2, L2, R2, R5, L3, R4, R76, L3, R4, R191, R5, R5, L5, L4, L5, L3, R1, R3, R2, L2, L2, L4, L5, L4, R5, R4, R4, R2, R3, R4, L3, L2, R5, R3, L2, L1, R2, L3, R2, L1, L1, R1, L3, R5, L5, L1, L2, R5, R3, L3, R3, R5, R2, R5, R5, L5, L5, R2, L3, L5, L2, L1, R2, R2, L2, R2, L3, L2, R3, L5, R4, L4, L5, R3, L4, R1, R3, R2, R4, L2, L3, R2, L5, R5, R4, L2, R4, L1, L3, L1, L3, R1, R2, R1, L5, R5, R3, L3, L3, L2, R4, R2, L5, L1, L1, L5, L4, L1, L1, R1"
 
 
-
--- ELM ARC BOILERPLATE -----------------
-
-
-type Msg
-    = Tick Time
-    | NoOp
-
-
-type alias Model =
-    { puzzleInput : String
-    , frame : Int
-    , canvWidth : Int
-    , canvHeight : Int
-    }
-
-
-main =
-    program
-        { init = init
-        , view = view
-        , update = update
-        , subscriptions = subscriptions
-        }
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        Tick newTime ->
-          ( { model | frame = model.frame + 1 }, Cmd.none)
-        NoOp ->
-            ( model, Cmd.none )
-
-
-init : ( Model, Cmd Msg )
-init =
-    ( Model puzzleInput 0 1800 800, Cmd.none )
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-   Time.every (100 * Time.millisecond) Tick
-
-
-drawGrid gridX gridY step =
-    let
-        strX =
-            toString gridX
-
-        strY =
-            toString gridY
-
-        cellX =
-            gridX // step
-
-        cellY =
-            gridY // step
-    in
-        (rect [ x "0", y "0", width strX, height strY, fill "#DDDDDD", stroke "#000000" ] []
-            :: (Array.toList
-                    (Array.map (\a -> line [ x1 (toString a), y1 "0", x2 (toString a), y2 strY, stroke "#FFFFFF", strokeWidth "5" ] [])
-                        (initialize cellX (\n -> n * step))
-                    )
-               )
-            ++ (Array.toList
-                    (Array.map (\a -> line [ x1 "0", y1 (toString a), x2 strX, y2 (toString a), stroke "#FFFFFF", strokeWidth "5" ] [])
-                        (initialize cellY (\n -> n * step))
-                    )
-               )
-        )
-
-
-view : Model -> Html Msg
-view model =
-    let
-        strX =
-            toString model.canvWidth
-
-        strY =
-            toString model.canvHeight
-    in
-        div []
-            [ svg [ width (toString model.canvWidth), height (toString model.canvHeight), viewBox ("0 0 " ++ strX ++ " " ++ strY), shapeRendering "optimizeSpeed" ]
-                (drawGrid model.canvWidth model.canvHeight 25)
-            , span [] [ Html.text (toString model.frame) ]
-            ]
-
-
-
--- END ELM ARC BOILERPLATE -----------------
-
-
-instructions : String -> Array String
+instructions : String -> List String
 instructions input =
     String.split "," input
         |> List.map String.trim
-        |> Array.fromList
 
 
 turnLeft : Int -> Int
@@ -176,7 +246,7 @@ orientate direction orientation =
             0
 
 
-translate : String -> Int -> Int -> ( Int, Int ) -> ( Int, Int )
+translate : String -> Int -> Int -> ( Int, Int ) -> Point
 translate direction orientation shift ( x, y ) =
     case direction of
         "L" ->
@@ -189,26 +259,26 @@ translate direction orientation shift ( x, y ) =
             ( 0, 0 )
 
 
-translateLeft : Int -> Int -> ( Int, Int ) -> ( Int, Int )
+translateLeft : Int -> Int -> ( Int, Int ) -> Point
 translateLeft orientation shift ( x, y ) =
     case orientation of
         0 ->
             ( x, y - shift )
 
         90 ->
-            ( x - 1, y )
+            ( x + shift, y )
 
         180 ->
             ( x, y + shift )
 
         270 ->
-            ( x + shift, y )
+            ( x - shift, y )
 
         _ ->
             ( 0, 0 )
 
 
-translateRight : Int -> Int -> ( Int, Int ) -> ( Int, Int )
+translateRight : Int -> Int -> ( Int, Int ) -> Point
 translateRight orientation shift ( x, y ) =
     case orientation of
         0 ->
@@ -244,8 +314,37 @@ parseInstruction input =
         ( direction, shift )
 
 
-move : String -> ( Int, Int, Int ) -> ( Int, Int, Int )
-move instruction ( x, y, orientation ) =
+getPositionOrigin : List Point -> Point
+getPositionOrigin moves =
+    let
+        item =
+            List.head moves
+    in
+        case item of
+            Just val ->
+                val
+
+            Nothing ->
+                ( 0, 0 )
+
+
+getPositionDestination : List Point -> Point
+getPositionDestination moves =
+    let
+        item =
+            List.reverse moves
+                |> List.head
+    in
+        case item of
+            Just val ->
+                val
+
+            Nothing ->
+                ( 0, 0 )
+
+
+move : String -> Position -> Position
+move instruction ( moves, orientation ) =
     let
         ( direction, shift ) =
             parseInstruction instruction
@@ -253,20 +352,14 @@ move instruction ( x, y, orientation ) =
         newOrientation =
             orientate direction orientation
 
-        newlist =
-            initialize shift identity
-
-        ( newX, newY ) =
-            Array.foldr (\a ( b, c ) -> translate direction newOrientation 1 ( b, c )) ( x, y ) newlist
+        moveList =
+            List.scanl (\a ( b, c ) -> translate direction newOrientation 1 ( b, c ))
+                (getPositionDestination moves)
+                (List.range 1 shift)
     in
-        ( newX, newY, newOrientation )
+        ( moveList, newOrientation )
 
 
 getBlocks : ( Int, Int, Int ) -> Float
 getBlocks ( x, y, orientation ) =
     (abs (toFloat x)) + (abs (toFloat y))
-
-
-runCommands : String -> Float
-runCommands input =
-    getBlocks (Array.foldl move ( 0, 0, 0 ) (instructions input))
