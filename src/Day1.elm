@@ -23,20 +23,25 @@ type Msg
     | Back
     | NoOp
 
+type alias Setup =
+    { width :Int
+    , height : Int
+    , step :Int
+    }
 
 type alias Model =
     { instructions : List String
     , frame : Int
-    , canvWidth : Int
-    , canvHeight : Int
-    , pathWay : List Position
-    , crossedPath: Bool
+    , setup : Setup
+    , previousPositions : List Position
+    , currentPosition : Position
+    , crossedPath : Bool
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model (instructions puzzleInput) 0 500 500 [ ( [], 0 ) ] False, Cmd.none )
+    ( Model (instructions puzzleInput) 0 (Setup 1800 800 3) [([], 0)] ([], 0) False, Cmd.none )
 
 
 main =
@@ -48,31 +53,84 @@ main =
         }
 
 
+updatePaths model modifier =
+    let
+        -- get new frame value
+        newFrame =
+            (clamp 0 (List.length model.instructions) (model.frame + modifier))
+
+        -- get all previous paths (this is to compare new positions with)
+        previousPaths =
+            List.scanl move ( [], 0 ) (List.take model.frame model.instructions)
+
+        -- put ins list into an array for easier slicing.
+        insArray =
+            Array.fromList model.instructions
+
+        -- get the curent instruction
+        currentIns =
+            Array.slice model.frame (model.frame + 1) insArray
+                |> Array.get 0
+                |> (\a ->
+                        case a of
+                            Just val ->
+                                val
+
+                            Nothing ->
+                                ""
+                   )
+
+        lastPosition =
+            List.reverse previousPaths
+                |> List.head
+                |> (\a ->
+                        case a of
+                            Just val ->
+                                val
+
+                            Nothing ->
+                                ( [], 0 )
+                   )
+
+        newPosition =
+            move currentIns lastPosition
+
+        allPaths =
+            List.foldr (\a b -> (List.drop 1 (Tuple.first a)) ++ b)
+                []
+                previousPaths
+
+
+        crossedPathDetail =
+            List.map
+                (\a -> (a, (List.member a allPaths)) )
+                ((List.drop 1 ((Tuple.first) newPosition)))
+                |> List.filter (\a -> Tuple.second a)
+
+        _ = Debug.log ":" crossedPathDetail
+        crossedPath =
+            if List.length crossedPathDetail > 0 then
+                True
+            else
+                False
+
+        allPositions =
+            List.append previousPaths [ newPosition ]
+    in
+        ( { model | frame = newFrame, previousPositions = allPositions, currentPosition = newPosition, crossedPath = crossedPath }, Cmd.none )
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Tick newTime ->
-            ( model, Cmd.none )
+            updatePaths model 1
 
         Back ->
-            let
-                newFrame =
-                    (clamp 0 (List.length model.instructions) (model.frame - 1))
-
-                updatedPaths =
-                    List.scanl move ( [], 0 ) (List.take newFrame model.instructions)
-            in
-                ( { model | frame = newFrame, pathWay = updatedPaths }, Cmd.none )
+            updatePaths model -1
 
         Forward ->
-            let
-                newFrame =
-                    (clamp 0 (List.length model.instructions) (model.frame + 1))
-
-                updatedPaths =
-                    List.scanl move ( [], 0 ) (List.take newFrame model.instructions)
-            in
-                ( { model | frame = newFrame, pathWay = updatedPaths }, Cmd.none )
+            updatePaths model 1
 
         NoOp ->
             ( model, Cmd.none )
@@ -81,7 +139,7 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.none
- 
+
 
 drawGrid : Int -> Int -> Int -> List (Svg msg)
 drawGrid gridX gridY step =
@@ -106,8 +164,18 @@ canvasBackGroundStyle =
 
 
 roadStyle =
-    [ strokeWidth "3"
+    [ strokeWidth "1"
     , stroke "#FFFFFF"
+    ]
+
+currentPathStyle =
+    [ strokeWidth "1"
+    , stroke "#0000FF"
+    ]
+
+pathStyle =
+    [ strokeWidth "1"
+    , stroke "#FF0000"
     ]
 
 
@@ -131,32 +199,59 @@ lineHelper ix1 iy1 ix2 iy2 styles =
         ++ styles
 
 
+drawPositionPath maxX maxY step position style=
+    let
+        ( ox, oy ) =
+            getPositionOrigin (Tuple.first position)
+
+        ( dx, dy ) =
+            getPositionDestination (Tuple.first position)
+
+        ( x1, y1 ) =
+            convertFromCartesian ox oy maxX maxY step
+
+        ( x2, y2 ) =
+            convertFromCartesian dx dy maxX maxY step
+    in
+        line (lineHelper x1 y1 x2 y2 style) []
+
+
+drawPath maxX maxY step positions style=
+    List.map (\a -> drawPositionPath maxX maxY step a style)
+        positions
+
+
 view : Model -> Html Msg
 view model =
     let
+        pathDrawer =
+            drawPath model.setup.height model.setup.height model.setup.step
+
         strX =
-            toString model.canvWidth
+            toString model.setup.width
 
         strY =
-            toString model.canvHeight
+            toString model.setup.height
     in
         div []
             [ div []
-                [ svg [ width (toString model.canvWidth), height (toString model.canvHeight), viewBox ("0 0 " ++ strX ++ " " ++ strY), shapeRendering "optimizeSpeed" ]
-                    (drawGrid model.canvWidth model.canvHeight 25)
+                [ svg [ width strX, height strY, viewBox ("0 0 " ++ strX ++ " " ++ strY), shapeRendering "optimizeSpeed" ]
+                    ((drawGrid model.setup.width model.setup.height model.setup.step)
+                        ++ pathDrawer model.previousPositions pathStyle
+                        ++ pathDrawer [model.currentPosition] currentPathStyle
+                    )
                 ]
             , div []
                 [ button [ onClick Forward ] [ Html.text "Forward Step" ]
                 , button [ onClick Back ] [ Html.text "Back Step" ]
-                , div [] [ Html.text ("Ins:" ++ (toString (List.take model.frame model.instructions))) ]
-                , div [] [ Html.text ("Paths:" ++ (toString model.pathWay)) ]
                 , div [] [ Html.text ("Frame:" ++ (toString model.frame)) ]
+                , div [] [ Html.text ("CrossedPath:" ++ (toString model.crossedPath)) ]
                 ]
             ]
 
 
-covertFromCartesian iX iY iGridX iGridY iStep =
-    ( (iGridX // 2) + (iX * iStep), (iGridY // 2) + (iY * iStep) )
+convertFromCartesian iX iY iGridX iGridY iStep =
+    ( (iGridX // 2) + (iX * iStep), (iGridY // 2) + ((iY * -1) * iStep) )
 
 
 
@@ -247,40 +342,8 @@ orientate direction orientation =
             0
 
 
-translate : String -> Int -> Int -> ( Int, Int ) -> Point
-translate direction orientation shift ( x, y ) =
-    case direction of
-        "L" ->
-            translateLeft orientation shift ( x, y )
-
-        "R" ->
-            translateRight orientation shift ( x, y )
-
-        _ ->
-            ( 0, 0 )
-
-
-translateLeft : Int -> Int -> ( Int, Int ) -> Point
-translateLeft orientation shift ( x, y ) =
-    case orientation of
-        0 ->
-            ( x, y - shift )
-
-        90 ->
-            ( x + shift, y )
-
-        180 ->
-            ( x, y + shift )
-
-        270 ->
-            ( x - shift, y )
-
-        _ ->
-            ( 0, 0 )
-
-
-translateRight : Int -> Int -> ( Int, Int ) -> Point
-translateRight orientation shift ( x, y ) =
+translate : Int -> Int -> ( Int, Int ) -> Point
+translate orientation shift ( x, y ) =
     case orientation of
         0 ->
             ( x, y + shift )
@@ -354,7 +417,7 @@ move instruction ( moves, orientation ) =
             orientate direction orientation
 
         moveList =
-            List.scanl (\a ( b, c ) -> translate direction newOrientation 1 ( b, c ))
+            List.scanl (\a ( b, c ) -> translate newOrientation 1 ( b, c ))
                 (getPositionDestination moves)
                 (List.range 1 shift)
     in
