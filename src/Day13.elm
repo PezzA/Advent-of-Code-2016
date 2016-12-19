@@ -1,8 +1,157 @@
 module Day13 exposing (..)
 
-import Array exposing (map, fromList, toList)
+import Array exposing (map, fromList, toList, Array, get)
 import String exposing (concat)
+import Html exposing (..)
+import Svg exposing (..)
+import Svg.Attributes exposing (..)
+import Time exposing (..)
 
+
+type alias Maze =
+    Array (Array Section)
+
+
+type Msg
+    = Tick Time
+    | NoOp
+
+
+type alias Model =
+    { baseval : Int
+    , maze : Maze
+    }
+
+entry = (1, 1)
+exit = (7, 4)
+
+init : ( Model, Cmd Msg )
+init =
+    ( Model 0 (createMaze 9 6 10 |> setSection  1 1 Agent |> setSection 7 4 Exit), Cmd.none )
+
+
+main =
+    program
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        Tick time ->
+            ( model, Cmd.none )
+
+        NoOp ->
+            ( model, Cmd.none )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
+
+getSection : Int -> Int -> Maze -> Section
+getSection y x display  =
+     let
+         col =
+             case get y display of
+                 Just val ->
+                     val
+
+                 Nothing ->
+                     Unknown
+     in
+         case get x col of
+             Just val ->
+                 val
+
+             Nothing ->
+                 Unknown
+
+
+setSection : Int -> Int -> Section -> Maze -> Maze
+setSection y x section maze =
+    Array.indexedMap
+        (\i a ->
+            if i == x then
+                Array.set y section a
+            else
+                a
+        )
+        maze
+
+renderSection : Section -> List (Svg.Attribute msg)
+renderSection value =
+    case value of
+        Space ->
+            [ fill "#FFFFFF" ]
+
+        Wall ->
+            [ fill "#444444" ]
+
+        Path ->
+            [ fill "#6666FF" ]
+
+        Agent ->
+            [ fill "#0000FF" ]
+
+        Exit ->
+            [ fill "#00FF00" ]
+
+        Unknown ->
+            [ fill "#FF0000" ]
+
+
+drawMaze : Maze -> List (Svg Msg)
+drawMaze maze =
+    let
+        new =
+            Array.indexedMap
+                (\yIndex mazeRow ->
+                    Array.indexedMap
+                        (\xIndex mazeCol ->
+                            rect (rectHelper (xIndex * 30) (yIndex * 30) 30 30 (renderSection mazeCol)) []
+                        )
+                        mazeRow
+                )
+                maze
+
+        halfArray =
+            Array.foldr (\a b -> Array.append a b) Array.empty new
+    in
+        halfArray
+            |> Array.toList
+
+
+rectHelper : Int -> Int -> Int -> Int -> List (Svg.Attribute msg) -> List (Svg.Attribute msg)
+rectHelper iX iY iWidth iHeight styles =
+    [ x (toString iX)
+    , y (toString iY)
+    , width (toString iWidth)
+    , height (toString iHeight)
+    ]
+        ++ styles
+
+
+view : Model -> Html Msg
+view model =
+    div []
+        [ h1 [] [ Html.text "Day 13" ]
+        , svg [ width "800", height "400", viewBox ("0 0 800 400"), shapeRendering "optimizeSpeed" ]
+            (drawMaze model.maze)
+        ]
+
+
+
+{--Puzzle processing, not UI stuff here --}
+
+type Tree
+    = End
+    | Exit
+    | Node Tree Tree Tree Tree
 
 type Section
     = Wall
@@ -55,45 +204,6 @@ isWall ( x, y ) salt =
         entity
 
 
-maze x y salt =
+createMaze : Int -> Int -> Int -> Maze
+createMaze x y salt =
     Array.map (\a -> Array.map (\b -> isWall ( b, a ) salt) (Array.fromList (List.range 0 x))) (Array.fromList (List.range 0 y))
-
-
-renderPixel : Section -> String
-renderPixel value =
-    case value of
-        Space ->
-            " "
-
-        Wall ->
-            "#"
-
-        Path ->
-            "."
-
-        Agent ->
-            "A"
-
-        Exit ->
-            "E"
-
-        Unknown ->
-            "/"
-
-
-consoleDisplay x y salt =
-    let
-        newMaze =
-            maze x y salt
-
-        display =
-            Array.map
-                (\a ->
-                    Array.map renderPixel a
-                        |> toList
-                        |> String.concat
-                        |> Debug.log ""
-                )
-                newMaze
-    in
-        True
