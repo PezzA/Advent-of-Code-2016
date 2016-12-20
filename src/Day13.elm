@@ -27,8 +27,8 @@ exit = (7, 4)
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model 0 (createMaze 9 6 10 |> setSection  1 1 Agent |> setSection 7 4 Exit), Cmd.none )
-
+    ( Model 0 (createMaze 35 40 1364 |> setSection  1 1 Agent |> setSection 31 39 Exit), Cmd.none )
+  -- ( Model 0 (createMaze 9 6 10 |> setSection  1 1 Agent |> setSection 7 4 Exit), Cmd.none )
 
 main =
     program
@@ -62,7 +62,7 @@ getSection y x display  =
                      val
 
                  Nothing ->
-                     Unknown
+                     Array.empty
      in
          case get x col of
              Just val ->
@@ -113,7 +113,7 @@ drawMaze maze =
                 (\yIndex mazeRow ->
                     Array.indexedMap
                         (\xIndex mazeCol ->
-                            rect (rectHelper (xIndex * 30) (yIndex * 30) 30 30 (renderSection mazeCol)) []
+                            rect (rectHelper (xIndex * 15) (yIndex * 15) 15 15 (renderSection mazeCol)) []
                         )
                         mazeRow
                 )
@@ -140,7 +140,7 @@ view : Model -> Html Msg
 view model =
     div []
         [ h1 [] [ Html.text "Day 13" ]
-        , svg [ width "800", height "400", viewBox ("0 0 800 400"), shapeRendering "optimizeSpeed" ]
+        , svg [ width "1800", height "800", viewBox ("0 0 1800 800"), shapeRendering "optimizeSpeed" ]
             (drawMaze model.maze)
         ]
 
@@ -148,10 +148,13 @@ view model =
 
 {--Puzzle processing, not UI stuff here --}
 
-type Tree
-    = End
-    | Exit
-    | Node Tree Tree Tree Tree
+type alias Point = (Int, Int)
+
+type Tree a
+    = Empty
+    | End
+    | LevelExit
+    | Node a Tree Tree Tree Tree
 
 type Section
     = Wall
@@ -207,3 +210,37 @@ isWall ( x, y ) salt =
 createMaze : Int -> Int -> Int -> Maze
 createMaze x y salt =
     Array.map (\a -> Array.map (\b -> isWall ( b, a ) salt) (Array.fromList (List.range 0 x))) (Array.fromList (List.range 0 y))
+
+
+doWalk =
+    let
+        something =
+            walk
+                (createMaze 9 6 10 |> setSection 7 4 Exit)
+                (Node (1, 1) Empty Empty Empty Empty)
+
+
+walk maze tree =
+    let
+        currentTree =
+            case tree of
+                Node (x,y) up left down right ->
+                    let
+                        maze = setSection x y Path
+
+                        if
+
+
+
+
+
+    in
+        True
+
+
+
+
+
+
+
+
