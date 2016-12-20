@@ -6,6 +6,7 @@ import Html exposing (..)
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Time exposing (..)
+import Set exposing (..)
 
 
 type alias Maze =
@@ -27,8 +28,8 @@ exit = (7, 4)
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model 0 (createMaze 35 40 1364 |> setSection  1 1 Agent |> setSection 31 39 Exit), Cmd.none )
-  -- ( Model 0 (createMaze 9 6 10 |> setSection  1 1 Agent |> setSection 7 4 Exit), Cmd.none )
+  --( Model 0 (createMaze 35 40 1364 |> setSection  1 1 Agent |> setSection 31 39 Exit), Cmd.none )
+    ( Model 0 (createMaze 40 40 1364  |> setSection 31 39 Exit), Cmd.none )
 
 main =
     program
@@ -54,7 +55,7 @@ subscriptions model =
     Sub.none
 
 getSection : Int -> Int -> Maze -> Section
-getSection y x display  =
+getSection x y display  =
      let
          col =
              case get y display of
@@ -69,7 +70,7 @@ getSection y x display  =
                  val
 
              Nothing ->
-                 Unknown
+                Unknown
 
 
 setSection : Int -> Int -> Section -> Maze -> Maze
@@ -95,15 +96,11 @@ renderSection value =
         Path ->
             [ fill "#6666FF" ]
 
-        Agent ->
-            [ fill "#0000FF" ]
-
         Exit ->
             [ fill "#00FF00" ]
 
         Unknown ->
             [ fill "#FF0000" ]
-
 
 drawMaze : Maze -> List (Svg Msg)
 drawMaze maze =
@@ -153,16 +150,19 @@ type alias Point = (Int, Int)
 type Tree a
     = Empty
     | End
+    | Walled
     | LevelExit
-    | Node a Tree Tree Tree Tree
+    | Stopped
+    | Pathed
+    | Node a (Tree a) (Tree a) (Tree a) (Tree a)
 
 type Section
     = Wall
     | Space
     | Path
-    | Agent
     | Exit
     | Unknown
+
 
 
 divideByTwo : Int -> ( Int, Int )
@@ -211,36 +211,76 @@ createMaze : Int -> Int -> Int -> Maze
 createMaze x y salt =
     Array.map (\a -> Array.map (\b -> isWall ( b, a ) salt) (Array.fromList (List.range 0 x))) (Array.fromList (List.range 0 y))
 
-
-doWalk =
+doWalk maxdepth =
     let
-        something =
-            walk
-                (createMaze 9 6 10 |> setSection 7 4 Exit)
-                (Node (1, 1) Empty Empty Empty Empty)
-
-
-walk maze tree =
-    let
-        currentTree =
-            case tree of
-                Node (x,y) up left down right ->
-                    let
-                        maze = setSection x y Path
-
-                        if
-
-
-
-
-
+        maze = 
+            createMaze 40 40 1364 
+                |> setSection 31 39 Exit
     in
-        True
+        step entry maze 0 maxdepth
 
 
+checkStep maze depth maxdepth x y = 
+    case getSection x y maze of
+        Exit -> LevelExit
+        Wall -> Walled
+        Path -> Pathed
+        Space -> 
+            step (x, y) maze (depth) maxdepth
+        _ -> End
+        
+step (x, y ) maze depth maxdepth =
+    if depth == maxdepth then
+        Stopped
+    else
+        case getSection x y maze of
+            Exit -> LevelExit
+            Path -> Pathed
+            Space ->
+                let 
+                    newMaze = 
+                        setSection x y Path maze
+                    
+                    mazeStepper = 
+                        checkStep newMaze (depth + 1) maxdepth
+                in
+                    Node (x,y)
+                        (mazeStepper x (y-1))
+                        (mazeStepper (x+1) y)
+                        (mazeStepper x (y+1))
+                        (mazeStepper (x-1) y)
+            _ -> End
 
 
-
-
-
-
+isExit tree = 
+    case tree of 
+        LevelExit -> True
+        _ -> False
+            
+hasPath tree = 
+    case tree of 
+        Node (x, y) n e s w ->
+            True
+        _ -> False
+        
+exitFound tree = 
+    case tree of
+        Node (x, y) n e s w ->
+            if isExit n || isExit e || isExit s || isExit w then
+                True
+            else if hasPath n || hasPath e || hasPath s || hasPath w then
+                exitFound n || exitFound e || exitFound s || exitFound w
+            else
+                False
+        LevelExit -> True
+        _ -> False
+        
+        
+flatten : Tree a -> List a
+flatten tree = 
+  case tree of
+    Node point n s e w  -> point :: (flatten n) ++ (flatten s) ++ (flatten e) ++ (flatten w)
+    _ -> []
+    
+-- day 2 answer : List.foldr (\a b -> if not (Set.member a b) then Set.insert a b else b) Set.empty ( flatten <| doWalk 50 ) |> Set.size
+-- had to add 1 as i dont actually return the end co-ords    
