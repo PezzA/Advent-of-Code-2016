@@ -1,6 +1,3 @@
---Remove the module line if you want to use this in /try
-
-
 module Day1 exposing (..)
 
 import Html exposing (..)
