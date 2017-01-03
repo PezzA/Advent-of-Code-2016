@@ -21,14 +21,34 @@ generateData state size =
     else 
         generateData (iterateData state) size
 
-getBit input = 
+getBit input = cd degrees
     case input of
         "11" -> '1'
         "00" -> '1'
         _ -> '0'
 
-reduceData input = 
-    List.map
-        (\ index -> getBit (String.slice ((index * 2)-2) (index * 2)  input))
-        (List.range 1 ((String.length input) // 2))
-            |> String.fromList
+reduceData input =
+    let
+        reducedData = List.map
+            (\ index -> getBit (String.slice ((index * 2)-2) (index * 2)  input))
+            (List.range 1 ((String.length input) // 2))
+                |> String.fromList
+    in
+        if String.length reducedData % 2 == 1 then
+            reducedData
+        else
+            reduceData reducedData
+
+
+partOne =
+    let
+        data = generateData "11011110011011101" 272
+    in
+        data
+
+
+partTwo =
+    let
+        data = generateData "11011110011011101" 35651584
+    in
+        data
