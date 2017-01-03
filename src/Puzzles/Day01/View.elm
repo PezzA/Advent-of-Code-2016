@@ -1,17 +1,15 @@
-module Day01.View exposing (..)
+module Puzzles.Day01.View exposing (..)
 
 import Html exposing (..)
 import Html.Events exposing (onClick)
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Array exposing (..)
+import Puzzles.Day01.Model exposing (..)
+import Puzzles.Day01.Styles exposing (..)
+import Shared.Charting exposing (..)
 
-import Day01.Model exposing (..)
 
-convertFromCartesian iX iY iGridX iGridY iStep =
-    ( (iGridX // 2) + (iX * iStep), (iGridY // 2) + ((iY * -1) * iStep) )
-
-    
 drawGrid : Int -> Int -> Int -> List (Svg msg)
 drawGrid gridX gridY step =
     (rect (rectHelper 0 0 gridX gridY canvasBackGroundStyle) []
@@ -28,55 +26,13 @@ drawGrid gridX gridY step =
     )
 
 
-canvasBackGroundStyle =
-    [ fill "#DDDDDD"
-    , stroke "#000000"
-    ]
-
-
-roadStyle =
-    [ strokeWidth "1"
-    , stroke "#FFFFFF"
-    ]
-
-currentPathStyle =
-    [ strokeWidth "1"
-    , stroke "#0000FF"
-    ]
-
-pathStyle =
-    [ strokeWidth "1"
-    , stroke "#FF0000"
-    ]
-
-
-rectHelper : Int -> Int -> Int -> Int -> List (Svg.Attribute msg) -> List (Svg.Attribute msg)
-rectHelper iX iY iWidth iHeight styles =
-    [ x (toString iX)
-    , y (toString iY)
-    , width (toString iWidth)
-    , height (toString iHeight)
-    ]
-        ++ styles
-
-
-lineHelper : Int -> Int -> Int -> Int -> List (Svg.Attribute msg) -> List (Svg.Attribute msg)
-lineHelper ix1 iy1 ix2 iy2 styles =
-    [ x1 (toString ix1)
-    , y1 (toString iy1)
-    , x2 (toString ix2)
-    , y2 (toString iy2)
-    ]
-        ++ styles
-
-
-drawPositionPath maxX maxY step position style=
+drawPositionPath maxX maxY step position style =
     let
         ( ox, oy ) =
-            getPositionOrigin (Tuple.first position)
+            getJumpOrigin (Tuple.first position)
 
         ( dx, dy ) =
-            getPositionDestination (Tuple.first position)
+            getJumpDestination (Tuple.first position)
 
         ( x1, y1 ) =
             convertFromCartesian ox oy maxX maxY step
@@ -87,9 +43,39 @@ drawPositionPath maxX maxY step position style=
         line (lineHelper x1 y1 x2 y2 style) []
 
 
-drawPath maxX maxY step positions style=
+drawPath maxX maxY step positions style =
     List.map (\a -> drawPositionPath maxX maxY step a style)
         positions
+
+
+drawBoundingBox : Model -> Svg Msg
+drawBoundingBox model =
+    case model.boundingBox of
+        ( Nothing, Nothing, Nothing, Nothing ) ->
+            Svg.text ""
+
+        ( a, b, c, d ) ->
+            let
+                tx =
+                    (Maybe.withDefault 0 a) + 1
+
+                bx =
+                    (Maybe.withDefault 0 b) - 1
+
+                by =
+                    (Maybe.withDefault 0 c) + 1
+
+                ty =
+                    (Maybe.withDefault 0 d) - 1
+            in
+                rect
+                    (rectHelper (convertXAxisFromCartesian bx model.setup.width model.setup.step)
+                        (convertYAxisFromCartesian by model.setup.height model.setup.step)
+                        (abs ((tx - bx) * model.setup.step))
+                        (abs ((ty - by) * model.setup.step))
+                        boundingStyle
+                    )
+                    []
 
 
 view : Model -> Html Msg
@@ -108,8 +94,9 @@ view model =
             [ div []
                 [ svg [ width strX, height strY, viewBox ("0 0 " ++ strX ++ " " ++ strY), shapeRendering "optimizeSpeed" ]
                     ((drawGrid model.setup.width model.setup.height model.setup.step)
-                        ++ pathDrawer model.previousPositions pathStyle
-                        ++ pathDrawer [model.currentPosition] currentPathStyle
+                        ++ [ drawBoundingBox model ]
+                        ++ pathDrawer model.previousJumps pathStyle
+                        ++ pathDrawer [ model.currentJump ] currentPathStyle
                     )
                 ]
             , div []
